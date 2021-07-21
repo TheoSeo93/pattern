@@ -605,10 +605,10 @@ def _read(path, encoding="utf-8", comment=";;;"):
             line = decode_utf8(line, encoding)
             if not line or (comment and line.startswith(comment)):
                 continue
-            yield line
-    else:
-        raise StopIteration
-
+            try:
+                yield line
+            except StopIteration:
+                return
 
 class Lexicon(lazydict):
 
@@ -2125,14 +2125,11 @@ class Verbs(lazydict):
     def load(self):
         # have,,,has,,having,,,,,had,had,haven't,,,hasn't,,,,,,,hadn't,hadn't
         id = self._format[TENSES_ID[INFINITIVE]]
-        try:
-            for v in _read(self._path):
-                v = v.split(",")
-                dict.__setitem__(self, v[id], v)
-                for x in (x for x in v if x):
-                    self._inverse[x] = v[id]
-        except StopIteration as no_path:
-            raise("The path is empty or False")
+        for v in _read(self._path):
+            v = v.split(",")
+            dict.__setitem__(self, v[id], v)
+            for x in (x for x in v if x):
+                self._inverse[x] = v[id]
 
     @property
     def path(self):
